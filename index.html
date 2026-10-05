@@ -1,0 +1,807 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>You Won</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sansita+Swashed:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    p { margin: 0; }
+
+    /* 360 × 800 Figma frame */
+    .frame {
+      position: relative;
+      width: 360px;
+      height: 800px;
+      background: linear-gradient(to bottom, #000a1f 45.625%, #024ac3);
+      overflow: hidden;
+      flex-shrink: 0;
+      touch-action: none;   /* a finger rubs the frost instead of scrolling the page */
+    }
+
+    /* Layer helpers: .a positions a box; .bl is the SVG bleed area (filters/blur) around it */
+    .a { position: absolute; }
+    .bl { position: absolute; }
+    .full { display: block; width: 100%; height: 100%; max-width: none; }
+    .cover { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; pointer-events: none; }
+    .rot { display: flex; align-items: center; justify-content: center; }
+    .rot > div { flex: none; }
+
+    /* Fairy lights */
+    .lights { left: 0; top: 0; width: 360px; height: 120.772px; overflow: hidden; pointer-events: none; }
+    .bulb-glows { inset: 0; pointer-events: none; }
+    .bulb-glow {
+      position: absolute;
+      width: 34px; height: 34px;
+      margin: -17px 0 0 -17px;
+      border-radius: 50%;
+      background: radial-gradient(circle,
+        rgba(255, 248, 220, 0.95) 0%,
+        rgba(255, 226, 150, 0.7) 22%,
+        rgba(255, 196, 90, 0.28) 48%,
+        rgba(255, 180, 60, 0) 72%);
+      mix-blend-mode: screen;
+      animation: twinkle var(--tw-dur, 2.4s) ease-in-out var(--tw-delay, 0s) infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.28; transform: scale(0.75); }
+      50%      { opacity: 0.8;  transform: scale(1.15); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bulb-glow { animation: none; opacity: 0.64; }
+    }
+    .lights img { position: absolute; left: 0; top: -175.15%; width: 100%; height: 298.08%; max-width: none; }
+
+    .fade-bottom {
+      left: 50%; bottom: 0; transform: translateX(-50%); width: 400px; height: 150px;
+      background: linear-gradient(to bottom, rgba(2,49,133,0), #003082); mix-blend-mode: luminosity;
+    }
+
+    /* Falling snowflakes and dots */
+    .fall {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      will-change: transform;
+      animation:
+        fall var(--fall-dur, 60s) linear var(--fall-delay, 0s) infinite,
+        sway var(--sway-dur, 7s) ease-in-out var(--sway-delay, 0s) infinite;
+    }
+    .spin { animation: spin 40s linear infinite; }
+    .spin-rev { animation-direction: reverse; animation-duration: 70s; }
+    /* Falls from just above the sky to the ground, melts away on landing, then restarts from the top */
+    @keyframes fall {
+      0%   { transform: translateY(var(--fall-from, -100px)); opacity: 1; }
+      94%  { opacity: 1; }
+      100% { transform: translateY(var(--fall-to, 600px)); opacity: 0; }
+    }
+    @keyframes sway {
+      0%, 100% { translate: calc(var(--sway, 8px) * -1) 0; }
+      50%      { translate: var(--sway, 8px) 0; }
+    }
+    @keyframes spin { to { rotate: 360deg; } }
+    .fall.flake > .a { scale: 0.8; }   /* ice flakes and their glows at 80% */
+    @media (prefers-reduced-motion: reduce) {
+      .fall, .spin { animation: none; }
+      .fall.clone { display: none; }
+    }
+
+    /* Santa sleigh: rides the snow once most of the frost is rubbed off */
+    .santa {
+      position: absolute;
+      left: 0; top: 0;
+      width: 150px; height: 150px;
+      margin: -75px 0 0 -75px;
+      z-index: 12;
+      pointer-events: none;
+      will-change: transform;
+    }
+    .santa img {
+      display: block; width: 100%; height: 100%; max-width: none;
+      transform: scaleX(-1);   /* artwork faces right; flip so he rides right -> left */
+      filter: drop-shadow(0 6px 10px rgba(0, 10, 40, 0.45));
+    }
+
+    /* Gifts */
+    .gift { position: absolute; z-index: 13; pointer-events: none; }
+    .gift-move {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .gift-move > div { flex: none; }
+    .gift-red img { pointer-events: auto; cursor: pointer; }
+    .gift img { display: block; max-width: none; object-fit: cover; }
+
+    /* "Winter is coming": letters drift in softly with a magical glow once the gifts have landed */
+    .headline {
+      position: absolute; left: 25px; top: 266px; width: 310px; padding-bottom: 12px;
+      z-index: 13; pointer-events: none;
+      font-family: "Sansita Swashed", Georgia, serif; font-weight: 600;
+      text-align: center; white-space: nowrap; line-height: normal;
+      filter: drop-shadow(0 2.957px 1.479px rgba(0,0,0,0.3));
+    }
+    .headline.glowing { animation: head-glow 4.5s ease-in-out infinite; }
+    @keyframes head-glow {
+      0%, 100% { filter: drop-shadow(0 2.957px 1.479px rgba(0,0,0,0.3)) drop-shadow(0 0 6px rgba(170,215,255,0.25)); }
+      50%      { filter: drop-shadow(0 2.957px 1.479px rgba(0,0,0,0.3)) drop-shadow(0 0 16px rgba(170,215,255,0.6)); }
+    }
+    .headline p { margin: 0; }
+    .headline .l1 { font-size: 100px; }
+    .headline .l2 { font-size: 44px; }
+    /* each letter carries its own slice of the shared gradient so it can animate independently */
+    .headline .ch {
+      display: inline-block; white-space: pre;
+      padding: 0 0.15em 0.2em; margin: 0 -0.15em -0.2em;   /* room for italic swashes and descenders */
+      color: transparent;
+      background-image: linear-gradient(128.255deg, rgba(189,189,189,0.73) 8.8168%, #fff 45.744%, #bdbdbd 64.215%, #fffcf6 87.453%);
+      background-size: 310px 164px;
+      -webkit-background-clip: text; background-clip: text;
+      opacity: 0;
+    }
+    .headline .ch.on { animation: letter-in 1.6s cubic-bezier(.2, .7, .2, 1) forwards; }
+    @keyframes letter-in {
+      0%   { opacity: 0; transform: translateY(16px) scale(0.86); filter: blur(10px); }
+      45%  { opacity: 1; filter: blur(1px) drop-shadow(0 0 14px rgba(200,230,255,0.95)); }
+      100% { opacity: 1; transform: none; filter: blur(0) drop-shadow(0 0 0 rgba(200,230,255,0)); }
+    }
+    /* stardust that floats off each letter as it appears */
+    .headline-fx { position: absolute; left: 25px; top: 266px; width: 310px; height: 180px; z-index: 14; pointer-events: none; }
+    .sparkle {
+      position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px;
+      background: radial-gradient(circle, #fff 0%, rgba(210,235,255,0.9) 25%, rgba(160,210,255,0) 70%);
+      border-radius: 50%;
+      animation: sparkle 1.8s ease-out forwards;
+    }
+    .sparkle::before, .sparkle::after {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      width: 16px; height: 1.5px; margin: -0.75px 0 0 -8px;
+      background: linear-gradient(90deg, rgba(255,255,255,0), #fff, rgba(255,255,255,0));
+    }
+    .sparkle::after { transform: rotate(90deg); }
+    @keyframes sparkle {
+      0%   { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0deg); }
+      25%  { opacity: 1; transform: translate(calc(var(--dx) * 0.3), calc(var(--dy) * 0.3)) scale(1) rotate(45deg); }
+      100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.4) rotate(120deg); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .headline .ch.on { animation: none; opacity: 1; }
+      .headline.glowing { animation: none; }
+      .sparkle { display: none; }
+    }
+
+    /* Ice frost overlay */
+    .frost {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <main class="frame" aria-label="Winter scene">
+    <!-- Sky glow -->
+    <div class="a" style="left:79px;top:8px;width:255px;height:255px"><div class="bl" style="inset:-70.59%"><img class="full" src="assets/v2/ellipse-9035.svg" alt="" /></div></div>
+    <div class="fall" data-speed="14" data-sway="6">
+      <div class="a" style="left:345px;top:153px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9042.svg" alt="" /></div>
+    </div>
+
+    <!-- Left snowflake -->
+    <div class="fall" data-speed="11" data-sway="10">
+      <div class="a" style="left:-11px;top:227px;width:51px;height:51px"><img class="cover spin" style="opacity:.4" src="assets/v2/flake-51.png" alt="" /></div>
+      <div class="a" style="left:calc(50% - 185.5px);top:225px;width:55px;height:55px;transform:translateX(-50%)"><div class="bl" style="inset:-72.73%"><img class="full" src="assets/v2/ellipse-9036.svg" alt="" /></div></div>
+    </div>
+
+    <!-- Aurora bands -->
+    <div class="a" style="left:151px;top:335px;width:423px;height:192.858px;mix-blend-mode:hard-light"><div class="bl" style="inset:-3.11% -1.42%"><img class="full" src="assets/v2/vector-2480.svg" alt="" /></div></div>
+    <div class="a" style="left:173px;top:346px;width:423px;height:192.858px;mix-blend-mode:hard-light"><div class="bl" style="inset:-3.11% -1.42%"><img class="full" src="assets/v2/vector-2480.svg" alt="" /></div></div>
+    <div class="a" style="left:-159px;top:335px;width:423px;height:192.858px;mix-blend-mode:color-burn"><div class="bl" style="inset:-3.11% -1.42%"><img class="full" src="assets/v2/vector-2478.svg" alt="" /></div></div>
+    <div class="a" style="left:16px;top:345px;width:423px;height:192.858px"><div class="bl" style="inset:-3.11% -1.42%"><img class="full" src="assets/v2/vector-2467.svg" alt="" /></div></div>
+    <div class="a" style="left:16px;top:345px;width:423px;height:192.858px"><div class="bl" style="inset:-3.11% -1.42%"><img class="full" src="assets/v2/vector-2467.svg" alt="" /></div></div>
+
+    <!-- Right snowflake -->
+    <div class="fall" data-speed="8" data-sway="14">
+      <div class="a" style="left:299px;top:218px;width:139px;height:139px"><img class="cover spin spin-rev" style="opacity:.25" src="assets/v2/flake-139.png" alt="" /></div>
+      <div class="a" style="left:calc(50% + 168.91px);top:261.02px;width:52.125px;height:52.125px;transform:translateX(-50%)"><div class="bl" style="inset:-191.85%"><img class="full" src="assets/v2/ellipse-9037.svg" alt="" /></div></div>
+    </div>
+
+    <!-- Center snowfall (snowflakes at 80% size) -->
+    <div class="fall" data-speed="10" data-sway="9">
+      <div class="a" style="left:158px;top:175px;width:40.8px;height:40.8px"><img class="cover spin" style="opacity:.4" src="assets/v2/flake-51.png" alt="" /></div>
+      <div class="a" style="left:156.40px;top:173.40px;width:44px;height:44px"><div class="bl" style="inset:-72.73%"><img class="full" src="assets/v2/ellipse-9036.svg" alt="" /></div></div>
+    </div>
+    <div class="fall" data-speed="8.5" data-sway="11">
+      <div class="a" style="left:200px;top:250px;width:91.2px;height:91.2px"><img class="cover spin" style="opacity:.4" src="assets/v2/flake-114.png" alt="" /></div>
+      <div class="a" style="left:205.96px;top:255.96px;width:79.28px;height:79.28px"><div class="bl" style="inset:-121.09%"><img class="full" src="assets/v2/ellipse-9040.svg" alt="" /></div></div>
+    </div>
+    <div class="fall" data-speed="7.5" data-sway="12">
+      <div class="a" style="left:95px;top:330px;width:111.2px;height:111.2px"><img class="cover spin spin-rev" style="opacity:.25" src="assets/v2/flake-139.png" alt="" /></div>
+      <div class="a" style="left:129.75px;top:364.75px;width:41.7px;height:41.7px"><div class="bl" style="inset:-191.85%"><img class="full" src="assets/v2/ellipse-9037.svg" alt="" /></div></div>
+    </div>
+    <div class="fall" data-speed="12" data-sway="8">
+      <div class="a" style="left:245px;top:420px;width:40.8px;height:40.8px"><img class="cover spin spin-rev" style="opacity:.4" src="assets/v2/flake-51.png" alt="" /></div>
+      <div class="a" style="left:243.40px;top:418.40px;width:44px;height:44px"><div class="bl" style="inset:-72.73%"><img class="full" src="assets/v2/ellipse-9036.svg" alt="" /></div></div>
+    </div>
+    <div class="fall" data-speed="15" data-sway="6">
+      <div class="a" style="left:130px;top:160px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9044.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="13" data-sway="7">
+      <div class="a" style="left:230px;top:205px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9042.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="17" data-sway="4">
+      <div class="a" style="left:175px;top:300px;width:4px;height:4px"><img class="full" src="assets/v2/ellipse-9045.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="14" data-sway="5">
+      <div class="a" style="left:265px;top:340px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9044.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="16" data-sway="6">
+      <div class="a" style="left:105px;top:265px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9042.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="12" data-sway="5">
+      <div class="a" style="left:200px;top:390px;width:4px;height:4px"><img class="full" src="assets/v2/ellipse-9045.svg" alt="" /></div>
+    </div>
+
+    <!-- Right trees -->
+    <div class="a" style="left:322px;top:428px;width:112px;height:87px;opacity:.8"><img class="cover" src="assets/v2/tree-a.png" alt="" /></div>
+    <div class="a" style="left:332px;top:434px;width:153px;height:119px;opacity:.8"><img class="cover" src="assets/v2/tree-a.png" alt="" /></div>
+    <div class="a" style="left:233px;top:446px;width:123px;height:96px;opacity:.8"><img class="cover" src="assets/v2/tree-a.png" alt="" /></div>
+    <div class="a" style="left:186px;top:427px;width:153px;height:119px;opacity:.8"><img class="cover" src="assets/v2/tree-b.png" alt="" /></div>
+    <div class="a" style="left:299px;top:392px;width:85px;height:172px;opacity:.8"><img class="cover" style="object-fit:fill;object-position:bottom" src="assets/v2/tree-c.png" alt="" /></div>
+
+    <!-- Left trees -->
+    <div class="a" style="left:6px;top:474px;width:112px;height:87px;opacity:.8"><img class="cover" src="assets/v2/tree-a.png" alt="" /></div>
+    <div class="a" style="left:16px;top:480px;width:153px;height:119px;opacity:.8"><img class="cover" src="assets/v2/tree-a.png" alt="" /></div>
+    <div class="a" style="left:-83px;top:492px;width:123px;height:96px;opacity:.8"><img class="cover" src="assets/v2/tree-a.png" alt="" /></div>
+    <div class="a" style="left:-130px;top:473px;width:153px;height:119px;opacity:.8"><img class="cover" src="assets/v2/tree-b.png" alt="" /></div>
+    <div class="a" style="left:-17px;top:438px;width:85px;height:172px;opacity:.8"><img class="cover" style="object-fit:fill;object-position:bottom" src="assets/v2/tree-c.png" alt="" /></div>
+
+    <!-- Snow hills and glows -->
+    <div class="a" style="left:50%;top:531.18px;width:400px;height:372.695px;transform:translateX(-50%)"><div class="bl" style="inset:-6.98% -6.25% -6.44% -6.25%"><img class="full" src="assets/v2/vector-2464.svg" alt="" /></div></div>
+    <div class="a" style="left:158px;top:306px;width:393px;height:393px"><div class="bl" style="inset:-73.79%"><img class="full" src="assets/v2/ellipse-9038.svg" alt="" /></div></div>
+    <div class="a" style="left:calc(50% - 178px);top:424px;width:244px;height:244px;transform:translateX(-50%)"><div class="bl" style="inset:-107.01%"><img class="full" src="assets/v2/ellipse-9039.svg" alt="" /></div></div>
+    <div class="a" style="right:0;bottom:-58.14px;width:217px;height:192.139px"><div class="bl" style="inset:-17.44% -18.2% -12.23% -8.06%"><img class="full" src="assets/v2/vector-2462.svg" alt="" /></div></div>
+    <div class="a" style="left:50%;bottom:-57.14px;width:400px;height:213.139px;transform:translateX(-50%)"><img class="full" src="assets/v2/group-hills.svg" alt="" /></div>
+    <div class="a fade-bottom"></div>
+
+    <!-- Big left ice flake -->
+    <div class="fall" data-speed="9.5" data-sway="12">
+      <div class="a" style="left:-48.68px;top:315.97px;width:114.031px;height:114.031px"><img class="cover spin" style="opacity:.4" src="assets/v2/flake-114.png" alt="" /></div>
+      <div class="a" style="left:calc(50% - 187.45px);top:321px;width:99.098px;height:99.098px;transform:translateX(-50%)"><div class="bl" style="inset:-121.09%"><img class="full" src="assets/v2/ellipse-9040.svg" alt="" /></div></div>
+    </div>
+
+    <!-- Sparkle dots -->
+    <div class="fall" data-speed="16" data-sway="5" style="mix-blend-mode:soft-light">
+      <div class="a" style="left:13px;top:150px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9043.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="13" data-sway="7">
+      <div class="a" style="left:13px;top:228px;width:6px;height:6px"><img class="full" src="assets/v2/ellipse-9044.svg" alt="" /></div>
+    </div>
+    <div class="fall" data-speed="18" data-sway="4" style="mix-blend-mode:luminosity">
+      <div class="a" style="left:61px;top:295px;width:4px;height:4px"><img class="full" src="assets/v2/ellipse-9045.svg" alt="" /></div>
+    </div>
+
+    <!-- Spotlight beams -->
+    <div class="a rot" style="left:189.836px;top:-4.007px;width:88.836px;height:102.36px"><div style="transform:scaleY(-1) rotate(-144.96deg)"><div style="position:relative;width:41px;height:96.267px"><div class="bl" style="inset:-24.93% -58.54%"><img class="full" src="assets/v2/vector-2476.svg" alt="" /></div></div></div></div>
+    <div class="a rot" style="left:163px;top:-6.805px;width:70.888px;height:104.44px"><div style="transform:rotate(-19.58deg)"><div style="position:relative;width:41px;height:96.267px"><div class="bl" style="inset:-24.93% -58.54%"><img class="full" src="assets/v2/vector-2473.svg" alt="" /></div></div></div></div>
+    <div class="a rot" style="left:233px;top:-21.513px;width:65.665px;height:74.11px"><div style="transform:rotate(-38.72deg)"><div style="position:relative;width:22.433px;height:77px"><div class="bl" style="inset:-37.99% -130.44% -41.2% -129.4%"><img class="full" src="assets/v2/vector-2474.svg" alt="" /></div></div></div></div>
+    <div class="a rot" style="left:168.639px;top:-20.783px;width:74.681px;height:60.322px"><div style="transform:scaleY(-1) rotate(-125.71deg)"><div style="position:relative;width:16.914px;height:79.817px"><div class="bl" style="inset:-37.6% -173.74% -35.31% -171.51%"><img class="full" src="assets/v2/vector-2479.svg" alt="" /></div></div></div></div>
+    <div class="a rot" style="left:213px;top:-6.773px;width:56.65px;height:78.315px"><div style="transform:rotate(-28.7deg)"><div style="position:relative;width:22.433px;height:77px"><div class="bl" style="inset:-37.99% -130.44% -41.2% -129.4%"><img class="full" src="assets/v2/vector-2477.svg" alt="" /></div></div></div></div>
+
+    <!-- Fairy lights -->
+    <div class="a bulb-glows" aria-hidden="true"></div>
+    <div class="a lights"><img src="assets/v2/fairy-lights.png" alt="" /></div>
+
+    <canvas class="frost" aria-hidden="true"></canvas>
+    <audio id="rub-sound" src="assets/v2/ice-rub.wav" preload="auto" hidden></audio>
+    <div class="santa" aria-hidden="true" hidden><img src="assets/v2/santa.png" alt="" /></div>
+
+    <div class="headline" aria-label="Winter is coming" hidden>
+      <p class="l1" data-type="Winter"></p>
+      <p class="l2" data-type="is coming"></p>
+    </div>
+    <div class="headline-fx" aria-hidden="true"></div>
+
+    <!-- Gifts: tossed out of the back of Santa's sleigh once he has gone -->
+    <div class="gift" style="left:150.19px;top:536.75px;width:233.062px;height:233.062px" hidden>
+      <div class="gift-move"><div style="transform:rotate(1.67deg)"><img style="width:226.564px;height:226.564px" src="assets/v2/gift-green.png" alt="" /></div></div>
+    </div>
+    <div class="gift" style="left:-39.32px;top:507.32px;width:283.064px;height:283.064px" hidden>
+      <div class="gift-move"><div style="transform:rotate(173.66deg) scaleY(-1)"><img style="width:256.318px;height:256.318px" src="assets/v2/gift-blue.png" alt="" /></div></div>
+    </div>
+    <div class="gift gift-red" style="left:54.26px;top:587.89px;width:301.739px;height:301.739px" hidden>
+      <div class="gift-move"><div style="transform:rotate(-172.97deg) scaleY(-1)"><img style="width:270.65px;height:270.65px" src="assets/v2/gift-red.png" alt="" /></div></div>
+    </div>
+  </main>
+
+  <script>
+    // Fairy lights: a pulsing glow behind every bulb (bulb centres measured from the lights image)
+    (() => {
+      const bulbs = [
+        [353.5, 3.8], [17.1, 12.3], [330.7, 20.0], [37.9, 29.7], [307.8, 34.0], [60.4, 46.2],
+        [283.3, 47.2], [256.2, 59.3], [83.9, 60.7], [229.1, 69.6], [106.9, 73.4], [201.4, 77.3],
+        [173.6, 84.0], [131.6, 84.5], [22.5, 87.3], [144.7, 88.8], [52.1, 90.4], [87.2, 91.9],
+        [115.7, 91.5], [157.2, 93.4], [184.1, 101.2], [344.9, 102.6], [208.9, 105.9], [318.7, 107.3],
+        [237.4, 109.8], [292.0, 110.1], [264.9, 111.1]
+      ];
+      const host = document.querySelector('.bulb-glows');
+      bulbs.sort((a, b) => a[0] - b[0]).forEach(([x, y], i) => {
+        const g = document.createElement('span');
+        g.className = 'bulb-glow';
+        g.style.left = x + 'px';
+        g.style.top = y + 'px';
+        g.style.setProperty('--tw-dur', (2 + (i % 3) * 0.45) + 's');
+        g.style.setProperty('--tw-delay', -((i * 0.37) % 2.4) + 's');  // ripple along the strings
+        host.appendChild(g);
+      });
+    })();
+
+    // Snowfall: every flake falls to the ground and restarts from the top. Each one is cloned and the
+    // copies are spread evenly through the fall cycle (at different x positions), so the sky is never empty.
+    (() => {
+      const W = 360, GROUND = 600, PAD = 10;
+      const FLAKE_COPIES = 3, DOT_COPIES = 2;
+      document.querySelectorAll('.fall').forEach((el, i) => {
+        const isFlake = !!el.querySelector('img[src*="flake-"]');
+        if (isFlake) el.classList.add('flake');
+        const box = el.firstElementChild;
+        const top = box.offsetTop, h = box.offsetHeight;
+        const centre = box.offsetLeft + box.offsetWidth / 2;
+        const from = -(top + h + PAD);           // just above the frame, so it enters right away
+        const to = GROUND - (top + h / 2);       // flake centre touches the ground
+        const dur = (to - from) / parseFloat(el.dataset.speed);   // speed in px/s
+        const progress = -from / (to - from);    // where the design places it at t=0
+        const copies = isFlake ? FLAKE_COPIES : DOT_COPIES;
+
+        for (let k = 0; k < copies; k++) {
+          const f = k === 0 ? el : el.cloneNode(true);
+          if (k > 0) {
+            f.classList.add('clone');
+            const x = 30 + ((i * 97 + k * 151) % (W - 60));   // spread copies across the width
+            f.style.left = (x - centre) + 'px';
+            f.style.right = (centre - x) + 'px';
+            el.parentNode.insertBefore(f, el.nextSibling);
+          }
+          f.style.setProperty('--fall-from', from + 'px');
+          f.style.setProperty('--fall-to', to + 'px');
+          f.style.setProperty('--fall-dur', dur + 's');
+          f.style.setProperty('--fall-delay', -(((progress + k / copies) % 1) * dur) + 's');
+          f.style.setProperty('--sway', el.dataset.sway + 'px');
+          f.style.setProperty('--sway-dur', (6 + ((i + k) % 4) * 1.5) + 's');
+          f.style.setProperty('--sway-delay', -((i + k * 3) * 1.3) + 's');
+        }
+      });
+    })();
+
+    (() => {
+      const W = 360, H = 800;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const frame = document.querySelector('.frame');
+      const view = document.querySelector('.frost');
+      const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const layer = (opts) => {
+        const c = document.createElement('canvas');
+        c.width = W * dpr; c.height = H * dpr;
+        const ctx = c.getContext('2d', opts);
+        ctx.scale(dpr, dpr);
+        return { c, ctx };
+      };
+
+      view.width = W * dpr; view.height = H * dpr;
+      const out = view.getContext('2d');
+      out.scale(dpr, dpr);
+
+      const haze = layer();     // grainy frosted glass base
+      const ice = layer();      // growing ice crystals
+      const melt = layer({ willReadFrequently: true });     // pointer-scratched areas (stay clear)
+
+      const rand = (a, b) => a + Math.random() * (b - a);
+
+      /* ---------- Haze: grainy pale frost ---------- */
+      {
+        const pw = haze.c.width, ph = haze.c.height;
+        const img = haze.ctx.createImageData(pw, ph);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const n = (Math.random() - 0.5) * 34;
+          d[i]     = 226 + n;
+          d[i + 1] = 232 + n;
+          d[i + 2] = 220 + n;
+          d[i + 3] = 236 + Math.random() * 19;
+        }
+        haze.ctx.putImageData(img, 0, 0);
+
+        haze.ctx.globalCompositeOperation = 'source-atop';
+        for (let i = 0; i < 16; i++) {
+          const x = rand(0, W), y = rand(0, H), r = rand(40, 170);
+          const g = haze.ctx.createRadialGradient(x, y, 0, x, y, r);
+          const dark = Math.random() < 0.45;
+          g.addColorStop(0, dark ? 'rgba(128,140,96,0.28)' : 'rgba(248,250,244,0.45)');
+          g.addColorStop(1, 'rgba(0,0,0,0)');
+          haze.ctx.fillStyle = g;
+          haze.ctx.fillRect(x - r, y - r, r * 2, r * 2);
+        }
+        haze.ctx.globalCompositeOperation = 'source-over';
+      }
+
+      /* ---------- Ice crystals: dendrites that grow ---------- */
+      const seeds = [];
+      for (let i = 0; i < 700; i++) {
+        let x, y, a;
+        if (Math.random() < 0.6) {
+          // grow in from the edges
+          const side = Math.floor(Math.random() * 4);
+          if (side === 0) { x = rand(0, W); y = 0; a = Math.PI / 2; }
+          else if (side === 1) { x = W; y = rand(0, H); a = Math.PI; }
+          else if (side === 2) { x = rand(0, W); y = H; a = -Math.PI / 2; }
+          else { x = 0; y = rand(0, H); a = 0; }
+          a += rand(-0.7, 0.7);
+        } else {
+          x = rand(0, W); y = rand(0, H); a = rand(0, Math.PI * 2);
+        }
+        seeds.push({ x, y, a, len: rand(14, 70), d: 0, start: rand(0, 2200) });
+      }
+      let tips = [];
+      const MAX_TIPS = 9000;
+      const DEPTHS = 5;
+
+      function growIce(elapsed) {
+        while (seeds.length && seeds[seeds.length - 1].start <= elapsed) tips.push(seeds.pop());
+
+        const light = Array.from({ length: DEPTHS }, () => new Path2D());
+        const dark = new Path2D();
+        const next = [];
+
+        for (const t of tips) {
+          for (let s = 0; s < 2 && t.len > 0; s++) {
+            const step = 1.6;
+            t.a += (Math.random() - 0.5) * 0.35;
+            const nx = t.x + Math.cos(t.a) * step;
+            const ny = t.y + Math.sin(t.a) * step;
+            const p = light[Math.min(t.d, DEPTHS - 1)];
+            p.moveTo(t.x, t.y); p.lineTo(nx, ny);
+            dark.moveTo(t.x + 0.6, t.y + 0.6); dark.lineTo(nx + 0.6, ny + 0.6);
+
+            // feathery side needles
+            if (Math.random() < 0.7) {
+              const na = t.a + (Math.random() < 0.5 ? 1 : -1) * Math.PI / 3;
+              const nl = rand(1.5, 5) / (t.d * 0.5 + 1);
+              const q = light[Math.min(t.d + 1, DEPTHS - 1)];
+              q.moveTo(nx, ny); q.lineTo(nx + Math.cos(na) * nl, ny + Math.sin(na) * nl);
+            }
+            // branches
+            if (t.d < DEPTHS - 1 && Math.random() < 0.12 && tips.length + next.length < MAX_TIPS) {
+              next.push({
+                x: nx, y: ny,
+                a: t.a + (Math.random() < 0.5 ? 1 : -1) * Math.PI / 3,
+                len: t.len * rand(0.4, 0.75), d: t.d + 1
+              });
+            }
+            t.x = nx; t.y = ny; t.len -= step;
+          }
+          if (t.len > 0 && t.x > -10 && t.x < W + 10 && t.y > -10 && t.y < H + 10) next.push(t);
+        }
+        tips = next;
+
+        const c = ice.ctx;
+        c.lineCap = 'round';
+        c.strokeStyle = 'rgba(96,108,88,0.16)';
+        c.lineWidth = 0.7;
+        c.stroke(dark);
+        for (let d = 0; d < DEPTHS; d++) {
+          c.strokeStyle = `rgba(255,255,255,${0.7 - d * 0.1})`;
+          c.lineWidth = Math.max(0.35, 0.95 - d * 0.15);
+          c.stroke(light[d]);
+        }
+        // sparkles
+        c.fillStyle = 'rgba(255,255,255,0.9)';
+        for (let i = 0; i < 12; i++) c.fillRect(rand(0, W), rand(0, H), 0.8, 0.8);
+      }
+
+      /* ---------- Pointer melting ---------- */
+      const BRUSH = 55;   // rub radius in px
+      const CORE = BRUSH * 0.55;   // fully cleared centre; the rest feathers out softly like wiped glass
+
+      function stamp(x, y) {
+        const c = melt.ctx;
+        // soft, feathered wipe
+        const g = c.createRadialGradient(x, y, CORE, x, y, BRUSH);
+        g.addColorStop(0, 'rgba(0,0,0,1)');
+        g.addColorStop(0.55, 'rgba(0,0,0,0.55)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        c.fillStyle = g;
+        c.beginPath(); c.arc(x, y, BRUSH, 0, Math.PI * 2); c.fill();
+        // a light, fine melt texture in the feathered band
+        c.fillStyle = 'rgba(0,0,0,0.75)';
+        c.beginPath();
+        for (let i = 0; i < 90; i++) {
+          const a = Math.random() * Math.PI * 2;
+          const r = BRUSH * rand(0.72, 1.02);
+          const sz = rand(0.3, 1.0);
+          const px = x + Math.cos(a) * r, py = y + Math.sin(a) * r;
+          c.moveTo(px + sz, py); c.arc(px, py, sz, 0, Math.PI * 2);
+        }
+        c.fill();
+
+      }
+
+      let last = null;
+      const toLocal = (e) => {
+        const r = frame.getBoundingClientRect();
+        return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
+      };
+      // is there still frost under (and around) this point? sampled before the stroke clears it
+      let rubbingIce = false;
+      function frostAt(x, y) {
+        // look at a ring just inside the brush edge: if frost is still there, this stroke is clearing ice
+        const R = BRUSH * 0.8, box = Math.ceil((R + 2) * dpr);
+        const cx = Math.round(x * dpr), cy = Math.round(y * dpr);
+        const sx = Math.max(0, cx - box), sy = Math.max(0, cy - box);
+        const w = Math.min(melt.c.width, cx + box) - sx, h = Math.min(melt.c.height, cy + box) - sy;
+        if (w <= 0 || h <= 0) return false;
+        const d = melt.ctx.getImageData(sx, sy, w, h).data;
+        let frosty = 0, n = 0;
+        for (let k = 0; k < 24; k++) {
+          const a = (k / 24) * Math.PI * 2;
+          const px = Math.round(cx + Math.cos(a) * R * dpr) - sx, py = Math.round(cy + Math.sin(a) * R * dpr) - sy;
+          if (px < 0 || py < 0 || px >= w || py >= h) continue;
+          n++;
+          if (d[(py * w + px) * 4 + 3] < 160) frosty++;
+        }
+        return n > 0 && frosty / n >= 0.15;
+      }
+      frame.addEventListener('pointermove', (e) => {
+        const p = toLocal(e);
+        rubbingIce = frostAt(p.x, p.y);
+        if (last) {
+          const dx = p.x - last.x, dy = p.y - last.y;
+          const n = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 6));
+          for (let i = 1; i <= n; i++) stamp(last.x + (dx * i) / n, last.y + (dy * i) / n);
+        } else stamp(p.x, p.y);
+        last = p;
+      });
+      frame.addEventListener('pointerleave', () => { last = null; });
+
+      /* ---------- Rubbing sound: icy rub loop, louder the faster you rub ----------
+         In the phone app the sound is played natively (so it works in silent mode too);
+         in a browser it plays through Web Audio. */
+      // the phone app flags itself before the page loads; the bridge may appear a moment later
+      const isNativeApp = () => !!(window.__NATIVE_APP__ || window.ReactNativeWebView);
+      const sendNative = (msg) => { if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage(JSON.stringify(msg)); };
+      let actx = null, rubGain = null, rubFilter = null, silenceTimer = 0;
+      const rubEl = document.getElementById('rub-sound');
+      function initAudio() {
+        if (isNativeApp()) return;
+        if (!actx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return;
+          actx = new AC();
+          rubGain = actx.createGain(); rubGain.gain.value = 0;
+          rubFilter = actx.createBiquadFilter(); rubFilter.type = 'highshelf'; rubFilter.frequency.value = 3000;
+          actx.createMediaElementSource(rubEl).connect(rubFilter).connect(rubGain).connect(actx.destination);
+          rubEl.loop = true;
+        }
+        if (actx.state !== 'running') actx.resume();
+        if (rubEl.paused) rubEl.play().catch(() => {});
+      }
+      // in a plain browser, sound unlocks with the first touch / click / key press
+      ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach((ev) =>
+        window.addEventListener(ev, initAudio, { passive: true }));
+
+      // sound only while actually rubbing: the pointer must be moving over frost.
+      // A tap or a finger held still never makes a sound.
+      let lastT = 0, lastP = null, stroke = 0, lastSent = 0;
+      function setRub(level) {
+        if (isNativeApp()) {
+          if (level === 0 && lastSent === 0) return;       // don't spam "silent"
+          lastSent = level; sendNative({ type: 'rub', level }); return;
+        }
+        if (!actx || !rubGain) return;
+        const t = actx.currentTime;
+        rubGain.gain.setTargetAtTime(level, t, level ? 0.03 : 0.08);
+        rubFilter.gain.setTargetAtTime(-6 + level * 8, t, 0.05);
+      }
+      function rubSound(p) {
+        if (announced) return;
+        const now = performance.now();
+        const dt = Math.max(8, now - lastT);
+        if (now - lastT > 150) { stroke = 0; lastP = null; }  // a pause starts a new stroke
+        const dist = lastP ? Math.hypot(p.x - lastP.x, p.y - lastP.y) : 0;
+        lastT = now; lastP = p;
+        stroke += dist;
+        const speed = Math.min(1, dist / dt / 1.2);         // 0..1
+        const moving = dist > 1.5 && stroke > 12;           // ignore taps and tiny jitters
+        clearTimeout(silenceTimer);
+        if (!rubbingIce || !moving) { setRub(0); return; }
+        setRub(0.25 + speed * 0.75);
+        silenceTimer = setTimeout(() => { setRub(0); stroke = 0; }, 90);
+      }
+      const endStroke = () => { clearTimeout(silenceTimer); setRub(0); stroke = 0; lastP = null; };
+      ['pointerdown', 'pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => frame.addEventListener(ev, endStroke));
+      frame.addEventListener('pointermove', (e) => rubSound(toLocal(e)));
+
+      // Track how much frost has been rubbed away; announce only once the glass is fully clear
+      // (98% leaves room for the soft brush edges), then melt away the last traces
+      const CLEAR_TARGET = 0.98;
+      const probe = document.createElement('canvas');
+      probe.width = 36; probe.height = 80;
+      const pctx = probe.getContext('2d', { willReadFrequently: true });
+      let announced = false, checkQueued = false;
+      function checkCleared() {
+        checkQueued = false;
+        pctx.clearRect(0, 0, probe.width, probe.height);
+        pctx.drawImage(melt.c, 0, 0, probe.width, probe.height);
+        const px = pctx.getImageData(0, 0, probe.width, probe.height).data;
+        let sum = 0;
+        for (let i = 3; i < px.length; i += 4) sum += px[i];
+        const cleared = sum / (255 * probe.width * probe.height);
+        if (!announced && cleared >= CLEAR_TARGET) {
+          announced = true;
+          clearTimeout(silenceTimer); setRub(0); sendNative({ type: 'rubdone' });
+          view.style.transition = 'opacity 0.8s ease';
+          view.style.opacity = '0';
+          frame.dispatchEvent(new CustomEvent('frostcleared', { detail: { cleared } }));
+        }
+      }
+      frame.addEventListener('pointermove', () => {
+        if (!announced && !checkQueued) { checkQueued = true; setTimeout(checkCleared, 250); }
+      });
+
+      /* ---------- Loop ---------- */
+      const FREEZE_MS = 3000;
+      const t0 = performance.now();
+
+      function render(now) {
+        const el = reduceMotion ? 1e9 : now - t0;
+
+        if (tips.length || seeds.length) growIce(el);
+        if (reduceMotion) while (tips.length) growIce(el);
+
+        out.clearRect(0, 0, W, H);
+        out.globalAlpha = Math.min(1, el / FREEZE_MS);
+        out.drawImage(haze.c, 0, 0, W, H);
+        out.globalAlpha = 1;
+        out.drawImage(ice.c, 0, 0, W, H);
+        out.globalCompositeOperation = 'destination-out';
+        out.drawImage(melt.c, 0, 0, W, H);
+        out.globalCompositeOperation = 'source-over';
+
+        requestAnimationFrame(render);
+      }
+      // seeds pop from the end, so order by start time descending
+      seeds.sort((a, b) => b.start - a.start);
+      requestAnimationFrame(render);
+    })();
+  </script>
+  <script>
+    // Santa rides the snow from right -> left along the hill's surface, looping, once 70% of the frost is cleared
+    (() => {
+      const frame = document.querySelector('.frame');
+      const santa = document.querySelector('.santa');
+      // ride line over the front snow hill: [x, y]. Stays level across the first ~75% of the
+      // screen (right -> left) and only heads downhill over the last quarter.
+      const HILL = [[0, 574], [25, 566], [50, 553], [72, 541], [90, 534], [105, 531],
+                    [260, 531], [300, 531], [340, 535], [360, 537]];
+      const hillY = (x) => {
+        let i = 0;
+        if (x <= HILL[0][0]) i = 0;
+        else if (x >= HILL[HILL.length - 1][0]) i = HILL.length - 2;
+        else while (HILL[i + 1][0] < x) i++;
+        const [x0, y0] = HILL[i], [x1, y1] = HILL[i + 1];
+        return y0 + (y1 - y0) * (x - x0) / (x1 - x0);   // extends the end slopes past the edges
+      };
+      const SINK = 45;                  // runners sit this far down into the snow surface
+      const RUNNER_OFFSET = 60;         // sleigh runners are ~60px below the sprite centre
+      const X_FROM = 440, X_TO = -80;   // fully off-screen right -> fully off-screen left
+      const RIDE_MS = 7000;
+      let riding = false;
+
+      // one ride across the snow; announces 'santaleft' when he is off-screen
+      function start() {
+        if (riding) return;
+        riding = true;
+        santa.hidden = false;
+        const t0 = performance.now();
+        function ride(now) {
+          const k = Math.min(1, (now - t0) / RIDE_MS);
+          const x = X_FROM + (X_TO - X_FROM) * k;
+          const hop = -Math.abs(Math.sin(now / 180)) * 3;           // little bumps over the snow
+          const y = hillY(x) + SINK - RUNNER_OFFSET + hop;
+          const tilt = Math.atan2(hillY(x + 4) - hillY(x - 4), 8) * 0.7;  // follow the slope (softened)
+          santa.style.transform = `translate(${x}px, ${y}px) rotate(${tilt}rad)`;
+          if (k < 1) { requestAnimationFrame(ride); return; }
+          santa.hidden = true;
+          riding = false;
+          frame.dispatchEvent(new CustomEvent('santaleft'));
+        }
+        requestAnimationFrame(ride);
+      }
+      frame.addEventListener('frostcleared', start, { once: true });
+
+      // tapping the red gift sends Santa on another ride
+      document.querySelector('.gift-red').addEventListener('click', start);
+
+      // After Santa's first ride, the gifts pop out of the back of his sleigh (where he left the
+      // screen on the left), tiny at first, and arc over to grow into their resting spots
+      const DROP = { x: 20, y: 560 };   // sleigh's rear as it exits on the left
+      frame.addEventListener('santaleft', () => {
+        const landings = [];
+        document.querySelectorAll('.gift').forEach((g, i) => {
+          const move = g.querySelector('.gift-move');
+          g.hidden = false;   // must be visible before measuring
+          const cx = g.offsetLeft + g.offsetWidth / 2, cy = g.offsetTop + g.offsetHeight / 2;
+          const dx = DROP.x - cx, dy = DROP.y - cy;
+          const lift = 110 + i * 25;   // height of the toss arc
+          const anim = move.animate([
+            { transform: `translate(${dx}px, ${dy}px) scale(0.12) rotate(-25deg)`, opacity: 0 },
+            { transform: `translate(${dx}px, ${dy}px) scale(0.16) rotate(-25deg)`, opacity: 1, offset: 0.06 },
+            { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - lift}px) scale(0.55) rotate(-8deg)`, offset: 0.5 },
+            { transform: 'translate(0, 6px) scale(1.04) rotate(2deg)', offset: 0.86 },
+            { transform: 'translate(0, -3px) scale(0.99) rotate(-1deg)', offset: 0.94 },
+            { transform: 'none' }
+          ], { duration: 1300, delay: i * 380, easing: 'cubic-bezier(.3, .6, .4, 1)', fill: 'both' });
+          landings.push(anim.finished);
+        });
+        Promise.all(landings).then(() => frame.dispatchEvent(new CustomEvent('giftslanded')));
+      }, { once: true });
+
+      // Once the gifts have settled, "Winter is coming" drifts in letter by letter, glowing softly
+      frame.addEventListener('giftslanded', async () => {
+        const head = document.querySelector('.headline');
+        const fx = document.querySelector('.headline-fx');
+        const chars = [];
+        head.querySelectorAll('[data-type]').forEach((line) => {
+          for (const c of line.dataset.type) {
+            const sp = document.createElement('span');
+            sp.className = 'ch';
+            sp.textContent = c;
+            line.appendChild(sp);
+            chars.push(sp);
+          }
+        });
+        head.hidden = false;
+        try { await document.fonts.ready; } catch (e) {}
+        // line each letter's gradient slice up with the whole headline
+        chars.forEach((c) => { c.style.backgroundPosition = `${-c.offsetLeft}px ${-c.offsetTop}px`; });
+
+        const sparkleAt = (c) => {
+          const n = c.parentElement.classList.contains('l1') ? 3 : 2;
+          for (let k = 0; k < n; k++) {
+            const sp = document.createElement('span');
+            sp.className = 'sparkle';
+            sp.style.left = (c.offsetLeft + Math.random() * c.offsetWidth) + 'px';
+            sp.style.top = (c.offsetTop + c.offsetHeight * (0.25 + Math.random() * 0.5)) + 'px';
+            sp.style.setProperty('--dx', (Math.random() * 30 - 15) + 'px');
+            sp.style.setProperty('--dy', -(20 + Math.random() * 30) + 'px');
+            sp.style.animationDelay = (k * 0.12) + 's';
+            fx.appendChild(sp);
+            sp.addEventListener('animationend', () => sp.remove());
+          }
+        };
+
+        let t = 0;
+        chars.forEach((c, i) => {
+          if (c.textContent !== ' ') {
+            setTimeout(() => { c.classList.add('on'); sparkleAt(c); }, t);
+          }
+          t += c.textContent === ' ' ? 60 : (i === 5 ? 420 : 140);   // soft beat after "Winter"
+        });
+        setTimeout(() => head.classList.add('glowing'), t + 1400);
+      }, { once: true });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="400" height="213.139" viewBox="0 0 400 213.139" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 1321317288">
+<g id="Vector 2470" filter="url(#filter0_n_0_14)">
+<path d="M399.5 46.5C326 31.4999 138.5 0 1.00005 0L1 212.509H399.5V46.5Z" fill="#BD9AE4"/>
+</g>
+<g id="Vector 2462" filter="url(#filter1_n_0_14)">
+<path d="M183 88.1388C274.5 27.6389 365 21.0002 400 21.0002V213.139H0V82.1388C31 88.1388 116.5 132.109 183 88.1388Z" fill="url(#paint0_radial_0_14)"/>
+<path d="M183 88.1388C274.5 27.6389 365 21.0002 400 21.0002V213.139H0V82.1388C31 88.1388 116.5 132.109 183 88.1388Z" fill="url(#paint1_radial_0_14)" fill-opacity="0.7"/>
+<path d="M183 88.1388C274.5 27.6389 365 21.0002 400 21.0002V213.139H0V82.1388C31 88.1388 116.5 132.109 183 88.1388Z" fill="url(#paint2_radial_0_14)" fill-opacity="0.7"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_n_0_14" x="1" y="0" width="398.5" height="212.509" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="2.5 2.5" stitchTiles="stitch" numOctaves="3" result="noise" seed="2563" />
+<feColorMatrix in="noise" type="luminanceToAlpha" result="alphaNoise" />
+<feComponentTransfer in="alphaNoise" result="coloredNoise1">
+<feFuncA type="discrete" tableValues="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+<feFlood flood-color="rgba(204, 171, 248, 0.22)" result="color1Flood" />
+<feComposite operator="in" in2="noise1Clipped" in="color1Flood" result="color1" />
+<feMerge result="effect1_noise_0_14">
+<feMergeNode in="shape" />
+<feMergeNode in="color1" />
+</feMerge>
+</filter>
+<filter id="filter1_n_0_14" x="0" y="21.0002" width="400" height="192.139" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feTurbulence type="fractalNoise" baseFrequency="2.5 2.5" stitchTiles="stitch" numOctaves="3" result="noise" seed="2563" />
+<feColorMatrix in="noise" type="luminanceToAlpha" result="alphaNoise" />
+<feComponentTransfer in="alphaNoise" result="coloredNoise1">
+<feFuncA type="discrete" tableValues="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 "/>
+</feComponentTransfer>
+<feComposite operator="in" in2="shape" in="coloredNoise1" result="noise1Clipped" />
+<feFlood flood-color="rgba(204, 171, 248, 0.22)" result="color1Flood" />
+<feComposite operator="in" in2="noise1Clipped" in="color1Flood" result="color1" />
+<feMerge result="effect1_noise_0_14">
+<feMergeNode in="shape" />
+<feMergeNode in="color1" />
+</feMerge>
+</filter>
+<radialGradient id="paint0_radial_0_14" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(200 67.0001) rotate(90) scale(197 344.105)">
+<stop offset="0.0336538" stop-color="white"/>
+<stop offset="0.153312" stop-color="#FD9EFF"/>
+<stop offset="0.580344" stop-color="#5969B9"/>
+<stop offset="1" stop-color="#01307F"/>
+</radialGradient>
+<radialGradient id="paint1_radial_0_14" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(387.5 25.1387) rotate(90.2513) scale(228.002 398.257)">
+<stop stop-color="#FEABFF"/>
+<stop offset="1" stop-color="#01307F" stop-opacity="0"/>
+</radialGradient>
+<radialGradient id="paint2_radial_0_14" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(19.5 109) rotate(90.5048) scale(227.009 396.522)">
+<stop stop-color="#FEABFF" stop-opacity="0.95"/>
+<stop offset="1" stop-color="#01307F" stop-opacity="0.4"/>
+</radialGradient>
+</defs>
+</svg>
